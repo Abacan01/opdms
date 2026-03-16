@@ -1,9 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "./use-auth";
 import { format, addDays } from "date-fns";
 
 export interface Appointment {
-  id: number;
-  patientId: number;
+  id: string;
+  patientId: string;
   doctorId: number;
   doctorName: string;
   specialization: string;
@@ -13,86 +26,60 @@ export interface Appointment {
   service: string;
   symptoms?: string;
   status: "upcoming" | "completed" | "cancelled";
-}
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const initialAppointments: Appointment[] = [
-  {
-    id: 1,
-    patientId: 1,
-    doctorId: 101,
-    doctorName: "Dr. John Doe De Castro",
-    specialization: "Cardiologist",
-    date: format(addDays(new Date(), 2), "yyyy-MM-dd"),
-    time: "10:00 AM",
-    appointmentType: "Consultation",
-    service: "General Consultation",
-    symptoms: "Mild chest pain",
-    status: "upcoming"
-  },
-  {
-    id: 2,
-    patientId: 1,
-    doctorId: 103,
-    doctorName: "Dra. D.Hessa Ackerman",
-    specialization: "Physical Therapist",
-    date: format(addDays(new Date(), 5), "yyyy-MM-dd"),
-    time: "02:00 PM",
-    appointmentType: "Physical Therapy",
-    service: "Physical Therapy Session",
-    status: "upcoming"
-  }
-];
-
-// Initialize localStorage if empty
-if (!localStorage.getItem("opdms_appointments")) {
-  localStorage.setItem("opdms_appointments", JSON.stringify(initialAppointments));
+  createdAt?: any;
 }
 
 export function useAppointments() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const getAppointments = () => {
-    return JSON.parse(localStorage.getItem("opdms_appointments") || "[]") as Appointment[];
-  };
-
-  const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ["appointments"],
+  const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
+    queryKey: ["appointments", user?.uid],
+    enabled: !!user,
     queryFn: async () => {
-      await delay(400);
-      return getAppointments();
+      if (!user) return [];
+      const q = query(
+        collection(db, "appointments"),
+        where("patientId", "==", user.uid),
+        orderBy("date", "asc")
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newAppt: Omit<Appointment, "id" | "status" | "patientId">) => {
-      await delay(600);
-      const current = getAppointments();
-      const appointment: Appointment = {
+    mutationFn: async (newAppt: Omit<Appointment, "id" | "status" | "patientId" | "createdAt">) => {
+      if (!user) throw new Error("Not authenticated");
+      const docRef = await addDoc(collection(db, "appointments"), {
         ...newAppt,
-        id: Date.now(),
-        patientId: 1,
-        status: "upcoming"
-      };
-      localStorage.setItem("opdms_appointments", JSON.stringify([...current, appointment]));
-      return appointment;
+        patientId: user.uid,
+        status: "upcoming",
+        createdAt: serverTimestamp(),
+      });
+      await addDoc(collection(db, "notifications"), {
+        userId: user.uid,
+        title: "Appointment Confirmed",
+        message: `Your ${newAppt.appointmentType} with ${newAppt.doctorName} on ${newAppt.date} at ${newAppt.time} is confirmed.`,
+        type: "appointment",
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+      return { id: docRef.id, ...newAppt, patientId: user.uid, status: "upcoming" as const };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.uid] });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: number, updates: Partial<Appointment> }) => {
-      await delay(500);
-      const current = getAppointments();
-      const updated = current.map(appt => appt.id === id ? { ...appt, ...updates } : appt);
-      localStorage.setItem("opdms_appointments", JSON.stringify(updated));
-      return updated.find(a => a.id === id);
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Appointment> }) => {
+      await updateDoc(doc(db, "appointments", id), updates);
+      return { id, ...updates };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", user?.uid] });
     },
   });
 

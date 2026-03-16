@@ -1,79 +1,147 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
+  type User as FirebaseUser,
+} from "firebase/auth";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { useQueryClient } from "@tanstack/react-query";
 
-export interface User {
-  id: number;
+export interface UserProfile {
+  uid: string;
   name: string;
   email: string;
   role: "patient" | "staff";
   avatarUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  birthday?: string;
+  address?: string;
+  sex?: string;
+  contactNumber?: string;
 }
 
-// Helper to simulate network delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export function useAuth() {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading } = useQuery<User | null>({
-    queryKey: ["auth", "user"],
-    queryFn: async () => {
-      await delay(400);
-      const stored = localStorage.getItem("opdms_user");
-      return stored ? JSON.parse(stored) : null;
-    },
-  });
-
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
-      await delay(800);
-      
-      // Mock demo logic
-      if (credentials.email === "patient@demo.com" && credentials.password === "demo123") {
-        const user: User = {
-          id: 1,
-          name: "John Doe",
-          email: "patient@demo.com",
-          role: "patient",
-          avatarUrl: "https://i.pravatar.cc/150?u=patient"
-        };
-        localStorage.setItem("opdms_user", JSON.stringify(user));
-        return user;
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        if (profileDoc.exists()) {
+          setUser(profileDoc.data() as UserProfile);
+        } else {
+          const profile: UserProfile = {
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName || firebaseUser.email || "User",
+            email: firebaseUser.email || "",
+            role: "patient",
+            avatarUrl: firebaseUser.photoURL || undefined,
+          };
+          await setDoc(doc(db, "users", firebaseUser.uid), profile);
+          setUser(profile);
+        }
+      } else {
+        setUser(null);
       }
-      
-      if (credentials.email === "staff@demo.com" && credentials.password === "demo123") {
-        const user: User = {
-          id: 2,
-          name: "Dr. Maria Santos",
-          email: "staff@demo.com",
-          role: "staff",
-          avatarUrl: "https://i.pravatar.cc/150?u=staff"
-        };
-        localStorage.setItem("opdms_user", JSON.stringify(user));
-        return user;
-      }
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-      throw new Error("Invalid credentials. Try patient@demo.com or staff@demo.com with demo123");
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["auth", "user"], data);
-    },
-  });
+  const login = async (credentials: { email: string; password: string }) => {
+    const result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+    const profileDoc = await getDoc(doc(db, "users", result.user.uid));
+    if (profileDoc.exists()) {
+      setUser(profileDoc.data() as UserProfile);
+    }
+    return result.user;
+  };
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await delay(300);
-      localStorage.removeItem("opdms_user");
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["auth", "user"], null);
-    },
-  });
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const profileDoc = await getDoc(doc(db, "users", result.user.uid));
+    if (!profileDoc.exists()) {
+      const profile: UserProfile = {
+        uid: result.user.uid,
+        name: result.user.displayName || "User",
+        email: result.user.email || "",
+        role: "patient",
+        avatarUrl: result.user.photoURL || undefined,
+      };
+      await setDoc(doc(db, "users", result.user.uid), profile);
+      setUser(profile);
+    } else {
+      setUser(profileDoc.data() as UserProfile);
+    }
+    return result.user;
+  };
+
+  const register = async (data: { name: string; email: string; password: string; role?: "patient" | "staff" }) => {
+    const result = await createUserWithEmailAndPassword(auth, data.email, data.password);
+    await updateProfile(result.user, { displayName: data.name });
+    const nameParts = data.name.split(" ");
+    const profile: UserProfile = {
+      uid: result.user.uid,
+      name: data.name,
+      email: data.email,
+      role: data.role || "patient",
+      firstName: nameParts[0] || "",
+      lastName: nameParts.slice(1).join(" ") || "",
+    };
+    await setDoc(doc(db, "users", result.user.uid), profile);
+    setUser(profile);
+    return result.user;
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+    queryClient.clear();
+  };
+
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) return;
+    const updatedProfile = { ...user, ...updates };
+    await updateDoc(doc(db, "users", user.uid), updates);
+    if (updates.name || updates.avatarUrl) {
+      await updateProfile(auth.currentUser!, {
+        displayName: updates.name || user.name,
+        photoURL: updates.avatarUrl || user.avatarUrl,
+      });
+    }
+    setUser(updatedProfile);
+  };
 
   return {
     user,
     isLoading,
-    login: loginMutation.mutateAsync,
-    isLoggingIn: loginMutation.isPending,
-    logout: logoutMutation.mutate,
+    login,
+    loginWithGoogle,
+    register,
+    logout,
+    resetPassword,
+    updateUserProfile,
+    isLoggingIn: false,
   };
 }

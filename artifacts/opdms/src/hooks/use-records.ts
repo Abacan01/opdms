@@ -1,70 +1,119 @@
 import { useQuery } from "@tanstack/react-query";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "./use-auth";
 
 export interface MedicalRecord {
-  id: number;
-  patientId: number;
+  id: string;
+  patientId: string;
   patientName: string;
-  patientAddress: string;
-  patientAge: number;
-  patientSex: string;
+  patientAddress?: string;
+  patientAge?: number;
+  patientSex?: string;
   doctorName: string;
-  clinicName: string;
-  clinicSchedule: string;
-  diagnosis: string;
-  prescription: string;
-  prescriptionInstructions: string;
+  clinicName?: string;
+  clinicSchedule?: string;
+  diagnosis?: string;
+  prescription?: string;
+  prescriptionInstructions?: string;
   recordType: "prescription" | "lab_result" | "consultation" | "treatment_plan";
   date: string;
-  licenseNo: string;
-  ptrNo: string;
+  licenseNo?: string;
+  ptrNo?: string;
 }
 
-const mockRecords: MedicalRecord[] = [
+const MOCK_RECORDS: MedicalRecord[] = [
   {
-    id: 201,
-    patientId: 1,
-    patientName: "John Doe",
-    patientAddress: "123 Hilltop, Batangas City",
-    patientAge: 32,
-    patientSex: "M",
-    doctorName: "Dr. John Doe De Castro",
+    id: "r1",
+    patientId: "demo",
+    patientName: "John D. Doe",
+    patientAddress: "Hilltop Batangas City",
+    patientAge: 20,
+    patientSex: "Male",
+    doctorName: "Juan Dela Cruz, MD",
     clinicName: "Don Juan Medical Center",
     clinicSchedule: "M, T, W, TH, Sat 9:00am-3:00pm",
-    diagnosis: "Essential Hypertension",
-    prescription: "Amlodipine 5mg Tab",
-    prescriptionInstructions: "Take 1 tablet once a day in the morning.",
+    diagnosis: "Vitamin deficiency",
+    prescription: "Vitamin C syrup",
+    prescriptionInstructions: "Once a day after breakfast",
     recordType: "prescription",
-    date: "2024-03-10",
-    licenseNo: "LIC-123456",
-    ptrNo: "PTR-987654"
+    date: "19-04-2025",
+    licenseNo: "LIC-2024-001",
+    ptrNo: "PTR-2024-001",
   },
   {
-    id: 202,
-    patientId: 1,
-    patientName: "John Doe",
-    patientAddress: "123 Hilltop, Batangas City",
-    patientAge: 32,
-    patientSex: "M",
-    doctorName: "Dra. Maria Santos",
+    id: "r2",
+    patientId: "demo",
+    patientName: "John D. Doe",
+    patientAddress: "Hilltop Batangas City",
+    patientAge: 20,
+    patientSex: "Male",
+    doctorName: "Dr. Maria Santos",
     clinicName: "Don Juan Medical Center",
     clinicSchedule: "M-F 8:00am-5:00pm",
-    diagnosis: "Upper Respiratory Tract Infection",
-    prescription: "Co-Amoxiclav 625mg Tab\nParacetamol 500mg Tab",
-    prescriptionInstructions: "Co-Amoxiclav: 1 tablet every 8 hours for 7 days.\nParacetamol: 1 tablet every 4 hours for fever.",
+    diagnosis: "General wellness",
+    prescription: "Multivitamins",
+    prescriptionInstructions: "Once a day after meals",
     recordType: "prescription",
-    date: "2024-02-15",
-    licenseNo: "LIC-654321",
-    ptrNo: "PTR-456789"
-  }
+    date: "15-03-2025",
+    licenseNo: "LIC-2024-002",
+    ptrNo: "PTR-2024-002",
+  },
+  {
+    id: "r3",
+    patientId: "demo",
+    patientName: "John D. Doe",
+    patientAddress: "Hilltop Batangas City",
+    patientAge: 20,
+    patientSex: "Male",
+    doctorName: "Dra. Jasper Jean Mariano",
+    clinicName: "Don Juan Medical Center",
+    clinicSchedule: "M, T, W, TH, Sat 8:00am-3:00pm",
+    diagnosis: "Routine cardiac check",
+    recordType: "consultation",
+    date: "10-02-2025",
+    licenseNo: "LIC-2024-003",
+    ptrNo: "PTR-2024-003",
+  },
+  {
+    id: "r4",
+    patientId: "demo",
+    patientName: "John D. Doe",
+    patientAddress: "Hilltop Batangas City",
+    patientAge: 20,
+    patientSex: "Male",
+    doctorName: "Dra. D.Hessa Ackerman",
+    clinicName: "Don Juan Medical Center",
+    clinicSchedule: "M, W, F 9:00am-5:00pm",
+    diagnosis: "Mild back strain",
+    recordType: "treatment_plan",
+    date: "05-01-2025",
+    licenseNo: "LIC-2024-004",
+    ptrNo: "PTR-2024-004",
+  },
 ];
 
 export function useRecords() {
-  return useQuery({
-    queryKey: ["records"],
+  const { user } = useAuth();
+
+  return useQuery<MedicalRecord[]>({
+    queryKey: ["records", user?.uid],
+    enabled: !!user,
     queryFn: async () => {
-      return new Promise<MedicalRecord[]>((resolve) => {
-        setTimeout(() => resolve(mockRecords), 400);
-      });
+      if (!user) return [];
+      try {
+        const q = query(
+          collection(db, "medical_records"),
+          where("patientId", "==", user.uid)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          return MOCK_RECORDS;
+        }
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as MedicalRecord));
+      } catch {
+        return MOCK_RECORDS;
+      }
     },
   });
 }
