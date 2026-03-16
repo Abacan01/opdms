@@ -1,0 +1,21 @@
+packages:
+  "framer-motion": "For smooth page transitions and micro-interactions"
+  "date-fns": "For formatting dates and calendar math"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to merge tailwind classes"
+  "react-hook-form": "For form state management"
+  "@hookform/resolvers": "For Zod form validation"
+  "zod": "For schema validation"
+
+images:
+  - path: "artifacts/opdms/public/images/hero-bg.png"
+    description: "A bright, clean, modern hospital corridor with soft blue and white lighting, blurred to serve as a subtle background, professional medical atmosphere."
+    aspect_ratio: "16:9"
+  - path: "artifacts/opdms/public/images/logo.png"
+    description: "A modern, minimalist medical cross logo combined with a heart shape, using light blue and teal colors, on a transparent background."
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app uses localStorage to simulate a backend for MVP demonstration purposes, as requested."
+  - "Auth state and all entities (appointments, records) are persisted in localStorage."
+  - "React Query hooks are wrapped around these mock services to provide standard isLoading/isPending states."
