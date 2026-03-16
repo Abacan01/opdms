@@ -11,7 +11,7 @@ export default function Records() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredRecords = records?.filter(r => 
-    r.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (r.diagnosis ?? "").toLowerCase().includes(searchTerm.toLowerCase()) || 
     r.doctorName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

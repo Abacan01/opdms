@@ -39,18 +39,30 @@ artifacts-monorepo/
 ## OPDMS Features
 
 - Landing page with hospital branding
-- Authentication (login/register with localStorage demo auth)
-  - Demo patient: `patient@demo.com` / `demo123`
-  - Demo staff: `staff@demo.com` / `demo123`
-- Dashboard with upcoming appointments, notifications, quick actions
-- Schedule page with calendar and appointment cards
-- Set Appointment modal (date, time, type, service, doctor, symptoms)
-- Reschedule modal
-- Doctors page with specialization cards and details modal
-- Records page with document modal (prescription view like capstone screenshots)
-- Health Library with categorized articles
-- Toast notifications for confirmations
-- Mobile-responsive with collapsible sidebar
+- Authentication via **Firebase Auth** (email/password + Google OAuth)
+- Dashboard redesigned: mini calendar, upcoming appointments, Latest News (DOH), Specialization cards
+- Schedule page with calendar and appointment management
+- Set Appointment modal + Reschedule modal
+- Doctors page with redesigned View Details modal (photo, contact info, specialization desc, Why Me?)
+- Records page with prescription document modal
+- Health Library with category filter + full article read modal
+- **Healthcare Appointment** page (9 services, paginated cards, View Details modal, Schedule a Service)
+- **Settings** page (personal info, password change, profile photo)
+- Firebase Firestore for appointments, notifications, user profiles, medical records
+- Custom sidebar (no icon-turning-white bug) — mobile-responsive
+- Toast notifications
+
+## Firebase Config
+
+Firebase credentials are stored in `artifacts/opdms/.env` as `VITE_FIREBASE_*` variables.
+Project: `opdms-eb2a2`
+
+## Stack (Updated)
+
+- **Auth**: Firebase Authentication (email/password, Google)
+- **Database**: Firebase Firestore (primary), PostgreSQL + Drizzle (legacy schema)
+- **Frontend**: React + Vite + Tailwind CSS (no more Shadcn Sidebar for nav)
+- **Sidebar**: Custom built sidebar (replaced collapsible Shadcn sidebar)
 
 ## Database Schema
 

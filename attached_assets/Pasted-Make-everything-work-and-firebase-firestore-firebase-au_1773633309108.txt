@@ -1,0 +1,16 @@
+Make everything work and firebase firestore, firebase authentication and vercel compatible for backends.
+
+also fix the icons turning white.
+
+Below (This is for patient side first)
+Also change the dashboard design into from attached image. Also follow this.
+Also make Health Library work and the read (This is for patient side first)
+Also make settings work, shows the "User Settings Page," a dedicated section where users can personalize and update their account information within the OPDMS. Accessible by clicking the "Settings" button in the sidebar, this page allows users to conveniently edit various personal details. This includes their "Firstname," "Lastname," "Username," "Email Address," "Password," "Birthday," "Address," "Sex," and "Contact Number". Additionally, users have the option to change or add a profile picture, which is particularly useful for doctors to easily recognize them. Once all desired changes have been made, users can finalize and save the updated information by clicking the "Save Settings" button. (This is for patient side first)
+
+Also change the view details of doctor design (This is for patient side first)
+You also forgot Healthcare Appointment (This is for patient side first)
+Healthcare Appointment Page
+Screenshot 13 displays the "Healthcare Appointment Page," which serves as a catalog of health services offered by Don Juan Medical Center. Similar in layout to the doctor's Browse section, this page presents various healthcare services as paginated cards, each featuring a relevant image, the service name (e.g., "Laboratory Test," "Lab Imaging Test"), and a description. For patients seeking more information, clicking the "View Details" text on each card opens a modal providing a more comprehensive explanation of that particular service. To facilitate quick navigation, a search bar is located at the top, allowing users to easily find specific services they may require. Additionally, a "Schedule Appointment" button in the top right corner enables patients to readily set a schedule for a chosen service, streamlining the appointment booking process. The page also includes "Previous" and "Next" buttons at the bottom for navigating through the various service offerings.
+
+View Details of Health Services Modal
+Screenshot 14 displays the "View Details of Health Services Modal," a dedicated pop-up window that appears when a user wishes to learn more about a specific health service. This modal is visually striking, featuring an enlarged image related to the service as its prominent banner at the top. Below this, a "Schedule a Service" button is provided, allowing users to conveniently book an appointment for that particular service directly from the modal. The main content area then provides a comprehensive explanation of the service, including details such as its purpose, types of tests involved (as seen for "Laboratory Test"), and essential information. This detailed explanation is designed to be scrollable, ensuring that users can access all the information even if it is extensive.

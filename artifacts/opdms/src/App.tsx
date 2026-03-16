@@ -11,13 +11,15 @@ import Schedule from "@/pages/schedule";
 import Doctors from "@/pages/doctors";
 import Records from "@/pages/records";
 import HealthLibrary from "@/pages/health-library";
+import HealthcareAppointment from "@/pages/healthcare-appointment";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
     },
   },
 });
@@ -32,11 +34,8 @@ function Router() {
       <Route path="/doctors" component={Doctors} />
       <Route path="/records" component={Records} />
       <Route path="/health-library" component={HealthLibrary} />
-      <Route path="/settings" component={() => (
-        <div className="min-h-screen flex items-center justify-center">
-          <h1 className="text-2xl font-display text-muted-foreground">Settings Page (Coming Soon)</h1>
-        </div>
-      )} />
+      <Route path="/healthcare-appointment" component={HealthcareAppointment} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

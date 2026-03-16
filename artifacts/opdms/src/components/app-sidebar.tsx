@@ -9,17 +9,6 @@ import {
   HeartPulse,
   Stethoscope,
 } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -37,86 +26,80 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { logout } = useAuth();
 
+  const checkActive = (url: string) =>
+    location === url || (url !== "/" && location.startsWith(url + "/"));
+
   return (
-    <Sidebar collapsible="icon" className="border-r border-border/50">
-      <SidebarHeader className="p-4 border-b border-border/50">
-        <Link href="/dashboard" className="flex items-center gap-3 px-1 group cursor-pointer">
-          <div className="bg-primary/10 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-300 shrink-0">
-            <HeartPulse className="w-6 h-6" />
+    <aside className="flex flex-col h-screen w-60 shrink-0 bg-white border-r border-gray-100 shadow-sm z-20">
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-gray-100">
+        <Link href="/dashboard" className="flex items-center gap-3 group cursor-pointer">
+          <div className="bg-primary/10 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-200 shrink-0">
+            <HeartPulse className="w-5 h-5" />
           </div>
-          <div className="flex flex-col overflow-hidden">
-            <span className="font-bold text-lg leading-none tracking-tight">OPDMS</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Medical Center</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-base leading-none tracking-tight text-gray-900">OPDMS</span>
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">
+              Medical Center
+            </span>
           </div>
         </Link>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent className="px-2 py-3">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {mainItems.map((item) => {
-                const isActive = location === item.url || location.startsWith(item.url + "/");
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
-                      <Link
-                        href={item.url}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full",
-                          isActive
-                            ? "bg-primary text-white font-medium shadow-sm"
-                            : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <item.icon
-                          className={cn(
-                            "w-5 h-5 shrink-0",
-                            isActive ? "text-white" : "text-muted-foreground"
-                          )}
-                        />
-                        <span className="text-sm truncate">{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+      {/* Nav Items */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        {mainItems.map((item) => {
+          const active = checkActive(item.url);
+          return (
+            <Link
+              key={item.title}
+              href={item.url}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 w-full text-sm font-medium select-none",
+                active
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              )}
+            >
+              <item.icon
+                style={{ width: "1rem", height: "1rem", flexShrink: 0 }}
+                className={active ? "text-white" : "text-gray-400"}
+              />
+              <span className="truncate">{item.title}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
-      <SidebarFooter className="px-2 py-3 border-t border-border/50">
-        <SidebarMenu className="gap-1">
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
-              <Link
-                href="/settings"
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full",
-                  location === "/settings"
-                    ? "bg-primary text-white font-medium shadow-sm"
-                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Settings className={cn("w-5 h-5 shrink-0", location === "/settings" ? "text-white" : "text-muted-foreground")} />
-                <span className="text-sm">Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Logout">
-              <button
-                onClick={() => logout()}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground/70 hover:bg-red-50 hover:text-red-600 transition-all duration-200 cursor-pointer"
-              >
-                <LogOut className="w-5 h-5 shrink-0 text-muted-foreground" />
-                <span className="text-sm">Logout</span>
-              </button>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+      {/* Footer */}
+      <div className="px-3 py-4 border-t border-gray-100 space-y-0.5">
+        <Link
+          href="/settings"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 w-full text-sm font-medium select-none",
+            checkActive("/settings")
+              ? "bg-primary text-white shadow-sm"
+              : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          )}
+        >
+          <Settings
+            style={{ width: "1rem", height: "1rem", flexShrink: 0 }}
+            className={checkActive("/settings") ? "text-white" : "text-gray-400"}
+          />
+          <span>Settings</span>
+        </Link>
+
+        <button
+          onClick={() => logout()}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150 text-sm font-medium cursor-pointer select-none"
+        >
+          <LogOut
+            style={{ width: "1rem", height: "1rem", flexShrink: 0 }}
+            className="text-gray-400"
+          />
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
   );
 }
