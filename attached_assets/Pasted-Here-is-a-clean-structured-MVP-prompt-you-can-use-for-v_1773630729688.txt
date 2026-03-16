@@ -1,0 +1,340 @@
+Here is a **clean, structured MVP prompt** you can use for **v0 / AI website generators / development planning** for your **OPDMS (Out-patient Document Management System)**. I also aligned it with the **screenshots and features in your capstone document**. 
+
+---
+
+# MVP Prompt — OPDMS (Out-Patient Document Management System)
+
+## Project Overview
+
+The **Out-patient Document Management System (OPDMS)** is a modern **web-based healthcare portal** designed to digitize and streamline hospital outpatient services. The system addresses the inefficiencies of traditional paper-based medical records by providing a secure digital platform for **managing patient information, doctor schedules, laboratory results, treatment plans, and appointment scheduling**.
+
+The platform aims to improve **healthcare accessibility, accuracy, and operational efficiency**, especially in response to challenges exposed during the COVID-19 pandemic, such as overcrowded waiting areas, manual appointment systems, and difficulty retrieving medical records. Through a centralized digital portal, patients and healthcare providers can interact, manage records, and schedule services efficiently.
+
+The OPDMS will support **secure access to Electronic Health Records (EHR), automated notifications, appointment scheduling, laboratory results management, and real-time doctor availability updates**. It promotes a **patient-centered healthcare experience** while enabling medical practitioners to manage outpatient workflows more effectively.
+
+The system will follow **modern web design standards** using a clean and accessible interface with a **light blue, black, and white color theme** to represent professionalism, trust, and healthcare reliability.
+
+---
+
+# Technical Stack
+
+### Frontend
+
+* **React / Next.js**
+* **shadcn/ui components**
+* **Tailwind CSS**
+* **Toast notifications for alerts and reminders**
+
+### Backend
+
+* **Node.js**
+* **Serverless deployment on Vercel**
+
+### Database
+
+* **Firebase Firestore**
+
+### Authentication
+
+* **Firebase Authentication**
+* Email & Password
+* **Login with Google**
+
+---
+
+# Design Theme
+
+The system interface should follow a **modern healthcare dashboard design**.
+
+Color scheme:
+
+* **Light Blue** – Primary healthcare color for trust and clarity
+* **White** – Clean medical interface
+* **Black / Dark Gray** – Text readability and contrast
+
+Design principles:
+
+* Minimalist UI
+* Card-based layout
+* Rounded components
+* Clear medical icons
+* Accessible typography
+* Responsive design (desktop-first)
+
+---
+
+# Core Features
+
+## 1 Authentication System
+
+Secure login and account management.
+
+Features:
+
+* Login
+* Register
+* Login with Google
+* Forgot password
+* Secure Firebase authentication
+* Role-based access:
+
+  * Patient
+  * Medical Staff
+
+Pages:
+
+* Auth Page
+* Create Account Page
+
+---
+
+# Landing Page
+
+The landing page introduces the hospital portal and encourages users to access services online.
+
+Sections:
+
+* Hero section (Hospital branding)
+* Description of OPDMS services
+* Key features:
+
+  * Appointment scheduling
+  * Online medical records
+  * Laboratory results access
+  * Doctor availability
+* Call-to-action buttons:
+
+  * Login
+  * Register
+* Healthcare illustration graphics
+* Footer with contact information
+
+---
+
+# Dashboard
+
+After login, users are redirected to the **Dashboard**.
+
+Sidebar Navigation:
+
+* Dashboard
+* Schedule
+* Doctors
+* Records
+* Healthcare Appointment
+* Health Library
+* Settings
+* Logout
+
+Dashboard Components:
+
+* Upcoming appointments
+* Recent medical documents
+* Notifications
+* Quick appointment booking
+* Doctor availability highlights
+
+---
+
+# Schedule Page
+
+This page allows users to **view and manage upcoming medical appointments**.
+
+Features:
+
+* Calendar view
+* List of scheduled consultations
+* Appointment cards
+* Reschedule button
+* Cancel appointment
+* Real-time availability
+
+Each appointment includes:
+
+* Doctor name
+* Medical specialization
+* Appointment date and time
+* Consultation type
+
+---
+
+# Set Appointment Modal
+
+Users can create a new appointment through a modal form.
+
+Fields:
+
+* Date
+* Time
+* Healthcare Appointment Type
+* Service Offered
+* Doctor
+* Symptoms Description
+
+Buttons:
+
+* Save
+* Cancel
+
+Features:
+
+* Validation
+* Toast confirmation notifications
+* Real-time doctor availability
+
+---
+
+# Reschedule Modal
+
+Allows patients to modify an existing appointment.
+
+Features:
+
+* Select new date
+* Select new time
+* Doctor availability check
+* Confirmation toast
+
+---
+
+# Doctors Page
+
+Displays the list of doctors and their specializations.
+
+Information shown:
+
+* Doctor name
+* Specialization
+* Profile photo
+* Clinic schedule
+* Available services
+
+Each doctor card includes:
+
+* View details button
+* Book appointment option
+
+---
+
+# View Specialization Modal
+
+Displays detailed information about a medical specialization.
+
+Includes:
+
+* Description of the specialization
+* Available doctors
+* Related healthcare services
+
+---
+
+# Records Page
+
+This page displays **patient medical records and documents**.
+
+Records may include:
+
+* Prescriptions
+* Consultation summaries
+* Laboratory results
+* Treatment plans
+
+Features:
+
+* Download medical documents
+* View document preview
+* Organized record history
+
+---
+
+# Document Modal
+
+Displays uploaded medical documents such as **prescriptions and treatment records**.
+
+The modal contains:
+
+* Patient information
+* Doctor information
+* Diagnosis
+* Prescription details
+* Doctor signature
+* Date of consultation
+
+Documents are uploaded by **medical practitioners** and made accessible to patients.
+
+This feature allows patients to **easily retrieve their medical history and prescriptions online**.
+
+---
+
+# Health Library
+
+Provides educational healthcare resources.
+
+Content:
+
+* Health articles
+* Preventive care tips
+* Medical guidelines
+* Wellness resources
+
+Purpose:
+
+* Improve patient awareness
+* Promote preventive healthcare
+
+---
+
+# Notification System
+
+The system includes **modern toast notifications** for:
+
+* Appointment confirmation
+* Appointment reminders
+* Record uploads
+* Schedule changes
+* System alerts
+
+Notifications improve communication between patients and healthcare providers.
+
+---
+
+# Security and Privacy
+
+The system follows healthcare data protection practices including:
+
+* Firebase authentication security
+* Secure Firestore database rules
+* Role-based access control
+* Compliance with **Data Privacy Act of 2012**
+* Protection of Electronic Health Records
+
+---
+
+# Expected Benefits
+
+Implementing OPDMS provides multiple advantages:
+
+For Patients:
+
+* Convenient appointment booking
+* Access to medical records anytime
+* Reduced waiting time
+* Better communication with healthcare providers
+
+For Medical Practitioners:
+
+* Organized patient records
+* Efficient appointment management
+* Reduced paperwork
+* Improved patient coordination
+
+For Hospitals:
+
+* Digital healthcare transformation
+* Improved outpatient workflow
+* Better data management and analytics
+* Enhanced patient satisfaction
+
+---
+
+If you want, I can also help you create the **SUPER PROMPT for v0.dev / Bolt / Cursor** so it can **generate the entire OPDMS dashboard UI automatically** (very useful for capstone demos).
