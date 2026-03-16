@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
-import { Search, X, ChevronLeft, ChevronRight, CalendarPlus, Loader2, Stethoscope } from "lucide-react";
+import { Search, X, ChevronLeft, ChevronRight, CalendarPlus, Loader2, Stethoscope, Edit } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useLocation } from "wouter";
-import { useHealthServices, HealthService, useCreateHealthService } from "@/hooks/use-health-services";
+import { useHealthServices, HealthService, useCreateHealthService, useUpdateHealthService } from "@/hooks/use-health-services";
 import { useForm } from "react-hook-form";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 6;
@@ -15,14 +17,16 @@ export default function HealthcareAppointment() {
   const { user } = useAuth();
   const { data: services, isLoading } = useHealthServices();
   const { mutateAsync: createService, isPending: isCreatingService } = useCreateHealthService();
+  const { mutateAsync: updateService, isPending: isUpdatingService } = useUpdateHealthService();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<HealthService | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingService, setEditingService] = useState<HealthService | null>(null);
   const [, navigate] = useLocation();
 
-  const { register, handleSubmit, reset } = useForm<{
+  const { register, handleSubmit, reset, watch, setValue } = useForm<{
     name: string;
     image: string;
     fullDescription: string;
@@ -33,6 +37,21 @@ export default function HealthcareAppointment() {
       fullDescription: "",
     },
   });
+
+  useEffect(() => {
+    if (editingService) {
+      reset({
+        name: editingService.name,
+        image: editingService.image,
+        fullDescription: editingService.fullDescription ?? "",
+      });
+      return;
+    }
+
+    if (isAddOpen) {
+      reset({ name: "", image: "", fullDescription: "" });
+    }
+  }, [editingService, isAddOpen, reset]);
 
   const filtered = (services ?? []).filter(
     (s) =>
@@ -48,25 +67,37 @@ export default function HealthcareAppointment() {
     setPage(1);
   };
 
+  const isFormOpen = isAddOpen || !!editingService;
+  
   const onAddService = async (data: { name: string; image: string; fullDescription: string }) => {
-    const description = data.fullDescription
-      .split(/\n\n+/)[0]
-      .replace(/^##\s*/gm, "")
-      .replace(/\*\*([^*]+)\*\*/g, "$1")
-      .trim();
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = data.fullDescription;
+    const description = tempDiv.innerText.substring(0, 150) + "...";
     try {
-      await createService({
-        name: data.name,
-        description,
-        image: data.image,
-        fullDescription: data.fullDescription,
-        sections: [{ title: "Overview", content: data.fullDescription }],
-      });
-      toast({ title: "Service added", description: "The new health service is now available." });
+      if (editingService) {
+        await updateService({
+          id: editingService.id,
+          name: data.name,
+          description,
+          image: data.image,
+          fullDescription: data.fullDescription,
+          sections: [],
+        });
+      } else {
+        await createService({
+          name: data.name,
+          description,
+          image: data.image,
+          fullDescription: data.fullDescription,
+          sections: [],
+        });
+      }
+      toast({ title: editingService ? "Service updated" : "Service added", description: editingService ? "The health service has been updated." : "The new health service is now available." });
       setIsAddOpen(false);
+      setEditingService(null);
       reset();
     } catch {
-      toast({ title: "Error", description: "Unable to add service right now.", variant: "destructive" });
+      toast({ title: "Error", description: "Unable to save service right now.", variant: "destructive" });
     }
   };
 
@@ -78,7 +109,14 @@ export default function HealthcareAppointment() {
           <p className="text-muted-foreground mt-1">Browse one of our hospital Services and book an appointment</p>
         </div>
         <button
-          onClick={() => (user?.role === "staff" ? setIsAddOpen(true) : navigate("/schedule"))}
+          onClick={() => {
+            if (user?.role === "staff") {
+              setEditingService(null);
+              setIsAddOpen(true);
+              return;
+            }
+            navigate("/schedule");
+          }}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-primary text-white shadow shadow-primary/25 hover:bg-primary/90 transition-all"
         >
           <CalendarPlus className="w-4 h-4" />
@@ -118,6 +156,10 @@ export default function HealthcareAppointment() {
                   <img
                     src={service.image}
                     alt={service.name}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/images/healthcare-ref.png";
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -192,18 +234,28 @@ export default function HealthcareAppointment() {
                     <img
                       src={selected.image}
                       alt={selected.name}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/images/healthcare-ref.png";
+                        }}
                       className="w-full h-full object-cover"
                     />
-                    <Dialog.Close className="absolute top-3 right-3 bg-black/40 text-white rounded-full p-1.5 hover:bg-black/60 transition-colors">
-                      <X className="w-4 h-4" />
-                    </Dialog.Close>
+                    
                   </div>
 
                   {/* Content */}
                   <div className="overflow-y-auto flex-1 p-6">
-                    <Dialog.Title className="text-2xl font-display font-bold flex items-center gap-2 mb-4">
-                      {selected.name}
-                    </Dialog.Title>
+                    <div className="flex items-start justify-between mb-4">
+                      <Dialog.Title className="text-2xl font-display font-bold flex items-center gap-2">
+                        {selected.name}
+                      </Dialog.Title>
+                      <Dialog.Description className="sr-only">
+                        View health service details and open the edit form.
+                      </Dialog.Description>
+                      <Dialog.Close className="text-muted-foreground hover:bg-muted p-2 rounded-full transition-colors">
+                        <X className="w-5 h-5" />
+                      </Dialog.Close>
+                    </div>
 
                     {user?.role !== "staff" && (
                       <button
@@ -213,25 +265,19 @@ export default function HealthcareAppointment() {
                         Schedule a Service
                       </button>
                     )}
+                    {user?.role === "staff" && (
+                      <button
+                        onClick={() => { 
+                          setEditingService(selected);
+                          setSelected(null); 
+                        }}
+                        className="w-full mb-6 py-3 rounded-xl font-semibold transition-colors text-sm bg-muted text-foreground border shadow-sm hover:bg-muted/80 flex items-center justify-center gap-2"
+                      >
+                        <Edit className="w-4 h-4" /> Edit Service
+                      </button>
+                    )}
 
-                    <div className="text-sm text-foreground/80 leading-relaxed mb-5 space-y-2">
-                      {selected.fullDescription.split("\n").map((line, i) => {
-                        if (line.startsWith("## ")) {
-                          return <h4 key={i} className="font-display font-bold text-base text-foreground mt-4 mb-1">{line.slice(3)}</h4>;
-                        }
-                        if (!line.trim()) return <div key={i} className="h-1" />;
-                        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-                        return (
-                          <p key={i} className="leading-relaxed">
-                            {parts.map((part, j) =>
-                              part.startsWith("**") && part.endsWith("**")
-                                ? <strong key={j}>{part.slice(2, -2)}</strong>
-                                : part
-                            )}
-                          </p>
-                        );
-                      })}
-                    </div>
+                    <div className="text-sm text-foreground/80 leading-relaxed mb-5 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: selected.fullDescription }} />
 
                     {selected.sections.map((section, i) => (
                       <div key={i} className="mb-4">
@@ -251,9 +297,9 @@ export default function HealthcareAppointment() {
         </AnimatePresence>
       </Dialog.Root>
 
-      <Dialog.Root open={isAddOpen} onOpenChange={setIsAddOpen}>
+      <Dialog.Root open={isFormOpen} onOpenChange={(val) => { setIsAddOpen(val); if (!val) setEditingService(null); }}>
         <AnimatePresence>
-          {isAddOpen && (
+          {isFormOpen && (
             <Dialog.Portal forceMount>
               <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
               <Dialog.Content
@@ -267,7 +313,10 @@ export default function HealthcareAppointment() {
                   className="bg-background rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto p-6"
                 >
                   <div className="flex items-center justify-between mb-5">
-                    <Dialog.Title className="text-xl font-display font-bold">Add Health Service</Dialog.Title>
+                    <Dialog.Title className="text-xl font-display font-bold">{editingService ? "Edit Health Service" : "Add Health Service"}</Dialog.Title>
+                    <Dialog.Description className="sr-only">
+                      {editingService ? "Edit existing health service information." : "Create a new health service entry."}
+                    </Dialog.Description>
                     <Dialog.Close className="text-muted-foreground hover:bg-muted p-2 rounded-full transition-colors">
                       <X className="w-5 h-5" />
                     </Dialog.Close>
@@ -292,15 +341,13 @@ export default function HealthcareAppointment() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-foreground block mb-1.5">Description</label>
-                      <textarea
-                        {...register("fullDescription", { required: true })}
-                        rows={7}
-                        placeholder={"Use ## for headings and **bold** for emphasis.\n\nExample:\n## What is this service?\nThis service provides **comprehensive care** for patients who need..."}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm resize-none font-mono"
+                      <ReactQuill
+                        theme="snow"
+                        value={watch("fullDescription")}
+                        onChange={(val) => setValue("fullDescription", val)}
+                        className="bg-card" style={{ height: "200px", marginBottom: "40px" }}
                       />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Supports: <code className="bg-muted px-1 rounded">## Heading</code> · <code className="bg-muted px-1 rounded">**bold**</code>
-                      </p>
+                      
                     </div>
 
                     <div className="pt-2 flex justify-end gap-3">
@@ -309,11 +356,11 @@ export default function HealthcareAppointment() {
                       </Dialog.Close>
                       <button
                         type="submit"
-                        disabled={isCreatingService}
+                        disabled={isCreatingService || isUpdatingService}
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-primary text-white shadow hover:bg-primary/90 transition-all disabled:opacity-70"
                       >
-                        {isCreatingService ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        Add Service
+                        {(isCreatingService || isUpdatingService) ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {editingService ? "Save Changes" : "Add Service"}
                       </button>
                     </div>
                   </form>

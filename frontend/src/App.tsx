@@ -10,6 +10,7 @@ import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import Schedule from "@/pages/schedule";
 import Doctors from "@/pages/doctors";
+import Patients from "@/pages/patients";
 import Records from "@/pages/records";
 import HealthLibrary from "@/pages/health-library";
 import HealthcareAppointment from "@/pages/healthcare-appointment";
@@ -33,7 +34,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/schedule" component={Schedule} />
       <Route path="/doctors" component={Doctors} />
-      <Route path="/patients" component={Doctors} />
+      <Route path="/patients" component={Patients} />
       <Route path="/records" component={Records} />
       <Route path="/health-library" component={HealthLibrary} />
       <Route path="/healthcare-appointment" component={HealthcareAppointment} />

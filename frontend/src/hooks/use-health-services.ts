@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { addDoc, collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export interface HealthService {
@@ -42,6 +42,25 @@ export function useCreateHealthService() {
         sections: input.sections ?? [],
       };
       await addDoc(collection(db, "health_services"), payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["health_services"] });
+    },
+  });
+}
+
+export interface UpdateHealthServiceInput extends Partial<CreateHealthServiceInput> {
+  id: string;
+}
+
+export function useUpdateHealthService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateHealthServiceInput) => {
+      const { id, ...data } = input;
+      const ref = doc(db, "health_services", id);
+      await updateDoc(ref, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["health_services"] });

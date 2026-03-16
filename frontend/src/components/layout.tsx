@@ -16,6 +16,12 @@ export function Layout({ children }: { children: ReactNode }) {
     setMobileOpen(false);
   }, [location]);
 
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, isLoading, navigate]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -25,7 +31,6 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    navigate("/auth");
     return null;
   }
 
@@ -84,7 +89,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold leading-none text-foreground">{user.name}</p>
                 <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                  {user.role === "staff" && user.occupation ? user.occupation : user.role}
+                  {user.role === "staff" ? (user.occupation || "Medical Staff") : user.role}
                 </p>
               </div>
               {user.avatarUrl ? (

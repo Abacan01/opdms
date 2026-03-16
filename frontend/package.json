@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "firebase": "^12.10.0"
+    "firebase": "^12.10.0",
+    "react-quill-new": "^3.8.3"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",

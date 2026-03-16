@@ -11,7 +11,7 @@ import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 
 import { auth } from "@/lib/firebase";
 import * as Dialog from "@radix-ui/react-dialog";
 
-const profileSchema = z.object({
+const getProfileSchema = (role?: string) => z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email"),
@@ -19,7 +19,7 @@ const profileSchema = z.object({
   address: z.string().optional(),
   sex: z.string().optional(),
   contactNumber: z.string().min(8, "Contact number is required"),
-  occupation: z.string().optional(),
+  occupation: role === "staff" ? z.string().min(1, "Occupation is required for staff") : z.string().optional(),
   specialization: z.string().optional(),
   servicesOffered: z.string().optional(),
   specializationDesc: z.string().optional(),
@@ -69,7 +69,7 @@ export default function Settings() {
   }, [staffProfileIncomplete]);
 
   const profileForm = useForm<ProfileForm>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(getProfileSchema(user?.role)),
     defaultValues: {
       firstName: user?.firstName || user?.name?.split(" ")[0] || "",
       lastName: user?.lastName || user?.name?.split(" ").slice(1).join(" ") || "",
@@ -419,7 +419,7 @@ export default function Settings() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="text-sm font-medium text-foreground block mb-1.5">Occupation</label>
-                    <input {...profileForm.register("occupation")} placeholder="Doctor / Nurse / Therapist" className={inputCls} />
+                    <input {...profileForm.register("occupation")} placeholder="Doctor / Nurse / Therapist" className={inputCls} required={user?.role === "staff"} />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-foreground block mb-1.5">Specialization</label>
