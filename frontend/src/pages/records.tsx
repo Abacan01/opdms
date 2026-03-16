@@ -99,11 +99,13 @@ export default function Records() {
       const saved = localStorage.getItem(LOCAL_RECORDS_KEY);
       if (!saved) return;
       const parsed = JSON.parse(saved) as RecordItem[];
-      setLocalStaffRecords(parsed);
+      setLocalStaffRecords(
+        parsed.filter((record) => !record.createdByStaffId || record.createdByStaffId === user?.uid)
+      );
     } catch {
       // Ignore invalid local cache.
     }
-  }, []);
+  }, [user?.uid]);
 
   const persistLocalStaffRecords = (next: RecordItem[]) => {
     setLocalStaffRecords(next);
@@ -188,6 +190,7 @@ export default function Records() {
         fileName: values.fileName || selectedFile.name,
         fileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(1)}mb`,
         fileUrl: "",
+        createdByStaffId: user?.uid,
         isLocal: true,
         localFileKey,
       };

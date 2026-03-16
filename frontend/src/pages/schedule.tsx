@@ -26,7 +26,11 @@ export default function Schedule() {
   const [detailsAppt, setDetailsAppt] = useState<Appointment | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [staffPage, setStaffPage] = useState(1);
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientStatusFilter, setPatientStatusFilter] = useState("all");
+  const [patientTypeFilter, setPatientTypeFilter] = useState("all");
 
   // Calendar logic
   const monthStart = startOfMonth(selectedDate);
@@ -37,11 +41,12 @@ export default function Schedule() {
   const allStaffAppointments = appointments
     .filter((appt) => {
       const byStatus = statusFilter === "all" ? true : appt.status === statusFilter;
+      const byType = typeFilter === "all" ? true : appt.appointmentType === typeFilter;
       const keyword = search.toLowerCase();
       const byKeyword =
         (appt.patientName ?? "").toLowerCase().includes(keyword) ||
         appt.appointmentType.toLowerCase().includes(keyword);
-      return byStatus && byKeyword;
+      return byStatus && byType && byKeyword;
     });
   const staffPerPage = 6;
   const staffTotalPages = Math.max(1, Math.ceil(allStaffAppointments.length / staffPerPage));
@@ -51,6 +56,20 @@ export default function Schedule() {
   );
 
   const doctorOptions = (doctors ?? []).map(d => ({ id: d.id, name: d.name, spec: d.specialization }));
+  const patientAppointments = appointments.filter((appt) => {
+    const byStatus = patientStatusFilter === "all" ? true : appt.status === patientStatusFilter;
+    const byType = patientTypeFilter === "all" ? true : appt.appointmentType === patientTypeFilter;
+    const keyword = patientSearch.toLowerCase();
+    const bySearch =
+      appt.doctorName.toLowerCase().includes(keyword) ||
+      appt.specialization.toLowerCase().includes(keyword) ||
+      appt.service.toLowerCase().includes(keyword) ||
+      appt.appointmentType.toLowerCase().includes(keyword);
+    return byStatus && byType && bySearch;
+  });
+  const activePatientAppointments = patientAppointments.filter(
+    (a) => a.status === "pending" || a.status === "upcoming"
+  );
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
@@ -60,7 +79,8 @@ export default function Schedule() {
       if (!doc) throw new Error("Doctor not found");
 
       await createAppointment({
-        doctorId: doc.id as any,
+        doctorId: doc.id,
+        assignedStaffId: doc.id,
         doctorName: doc.name,
         specialization: doc.spec,
         date: data.date,
@@ -158,6 +178,19 @@ export default function Schedule() {
             <option value="upcoming">Confirmed</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setStaffPage(1);
+            }}
+            className="w-full md:w-56 px-4 py-2.5 rounded-xl border-2 bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+          >
+            <option value="all">All Types</option>
+            {APPOINTMENT_TYPES.map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
           </select>
         </div>
 
@@ -405,11 +438,41 @@ export default function Schedule() {
           <div className="bg-card border rounded-2xl p-6 shadow-sm min-h-[500px]">
             <h2 className="font-display font-semibold text-xl mb-6">Upcoming Schedules</h2>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+              <input
+                value={patientSearch}
+                onChange={(e) => setPatientSearch(e.target.value)}
+                placeholder="Search doctor, service, type..."
+                className="w-full px-4 py-2.5 rounded-xl border-2 bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+              />
+              <select
+                value={patientStatusFilter}
+                onChange={(e) => setPatientStatusFilter(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="upcoming">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select
+                value={patientTypeFilter}
+                onChange={(e) => setPatientTypeFilter(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+              >
+                <option value="all">All Types</option>
+                {APPOINTMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
             {isLoading ? (
               <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-            ) : activeAppointments.length > 0 ? (
+            ) : activePatientAppointments.length > 0 ? (
               <div className="space-y-4">
-                {activeAppointments.map((appt) => (
+                {activePatientAppointments.map((appt) => (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     key={appt.id}

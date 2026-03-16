@@ -27,12 +27,24 @@ export function usePatients() {
     queryFn: async () => {
       const usersRef = collection(db, "users");
       const patientsSnap = await getDocs(query(usersRef, where("role", "==", "patient")));
-      const appointmentsSnap = await getDocs(collection(db, "appointments"));
+      const appointmentsRef = collection(db, "appointments");
+      const [assignedSnap, legacyDoctorSnap] = await Promise.all([
+        getDocs(query(appointmentsRef, where("assignedStaffId", "==", user?.uid))),
+        getDocs(query(appointmentsRef, where("doctorId", "==", user?.uid))),
+      ]);
+
+      const appointments = Array.from(
+        new Map([...assignedSnap.docs, ...legacyDoctorSnap.docs].map((d) => [d.id, d])).values()
+      );
+
+      const assignedPatientIds = new Set<string>();
 
       const latestVisitByPatient = new Map<string, string>();
-      appointmentsSnap.forEach((apptDoc) => {
+      appointments.forEach((apptDoc) => {
         const appt = apptDoc.data() as { patientId?: string; date?: string };
         if (!appt.patientId || !appt.date) return;
+
+        assignedPatientIds.add(appt.patientId);
 
         const prev = latestVisitByPatient.get(appt.patientId);
         if (!prev || appt.date > prev) {
@@ -40,7 +52,9 @@ export function usePatients() {
         }
       });
 
-      return patientsSnap.docs.map((docSnap) => {
+      return patientsSnap.docs
+        .filter((docSnap) => assignedPatientIds.has(docSnap.id))
+        .map((docSnap) => {
         const data = docSnap.data() as Omit<PatientProfile, "id">;
         const fallbackName = `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim() || "Unknown Patient";
         const parsedBirthday = data.birthday ? parseISO(data.birthday) : null;

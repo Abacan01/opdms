@@ -21,7 +21,8 @@ export interface Appointment {
   id: string;
   patientId: string;
   patientName?: string;
-  doctorId: number;
+  doctorId: string;
+  assignedStaffId?: string;
   doctorName: string;
   specialization: string;
   date: string;
@@ -66,8 +67,15 @@ export function useAppointments() {
 
       const col = collection(db, "appointments");
       if (user.role === "staff") {
-        const snap = await getDocs(col);
-        const mapped = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Appointment));
+        const [assignedSnap, legacyDoctorSnap] = await Promise.all([
+          getDocs(query(col, where("assignedStaffId", "==", user.uid))),
+          getDocs(query(col, where("doctorId", "==", user.uid))),
+        ]);
+
+        const mergedDocs = [...assignedSnap.docs, ...legacyDoctorSnap.docs];
+        const mapped = Array.from(new Map(mergedDocs.map((d) => [d.id, d])).values()).map(
+          (d) => ({ id: d.id, ...d.data() } as Appointment)
+        );
         const patientIds = Array.from(new Set(mapped.map((appt) => appt.patientId).filter(Boolean)));
 
         if (patientIds.length === 0) {
@@ -119,11 +127,14 @@ export function useAppointments() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newAppt: Omit<Appointment, "id" | "status" | "patientId" | "createdAt">) => {
+    mutationFn: async (
+      newAppt: Omit<Appointment, "id" | "status" | "patientId" | "createdAt">
+    ) => {
       if (!user) throw new Error("Not authenticated");
       const docRef = await addDoc(collection(db, "appointments"), {
         ...newAppt,
         patientId: user.uid,
+        assignedStaffId: newAppt.assignedStaffId || newAppt.doctorId,
         status: "pending",
         createdAt: serverTimestamp(),
       });
