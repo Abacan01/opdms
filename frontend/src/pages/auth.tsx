@@ -198,7 +198,7 @@ export default function AuthPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
         <div className="relative z-10 flex items-center gap-3">
           <div className="bg-white p-2.5 rounded-xl shadow-lg">
-            <HeartPulse className="w-7 h-7 text-primary" />
+            <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="Logo" className="w-8 h-8 object-contain" />
           </div>
           <span className="font-bold text-2xl text-white tracking-tight">OPDMS</span>
         </div>
@@ -236,7 +236,7 @@ export default function AuthPage() {
             <div className="flex justify-center mb-6 md:hidden">
               <div className="flex items-center gap-2">
                 <div className="bg-primary/10 p-2 rounded-xl">
-                  <HeartPulse className="w-6 h-6 text-primary" />
+                  <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="Logo" className="w-8 h-8 object-contain" />
                 </div>
                 <span className="font-bold text-xl">OPDMS</span>
               </div>

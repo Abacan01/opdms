@@ -44,8 +44,8 @@ export function AppSidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-sidebar-border">
         <Link href="/dashboard" className="flex items-center gap-3 group cursor-pointer">
-          <div className="bg-primary/10 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-200 shrink-0">
-            <HeartPulse className="w-5 h-5" />
+          <div className="shrink-0 flex items-center justify-center">
+            <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="Logo" className="w-8 h-8 object-contain" />
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-base leading-none tracking-tight text-sidebar-foreground">OPDMS</span>

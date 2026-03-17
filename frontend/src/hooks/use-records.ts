@@ -44,39 +44,14 @@ export function useRecords() {
         return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MedicalRecord);
       }
 
-      const apptsRef = collection(db, "appointments");
-      const [assignedSnap, legacyDoctorSnap] = await Promise.all([
-        getDocs(query(apptsRef, where("assignedStaffId", "==", user.uid))),
-        getDocs(query(apptsRef, where("doctorId", "==", user.uid))),
-      ]);
-
-      const assignedPatientIds = Array.from(
-        new Set(
-          [...assignedSnap.docs, ...legacyDoctorSnap.docs]
-            .map((d) => (d.data() as { patientId?: string }).patientId)
-            .filter((id): id is string => Boolean(id))
-        )
-      );
-
-      if (assignedPatientIds.length === 0) {
+      const q = query(collection(db, "medical_records"), where("createdByStaffId", "==", user.uid));
+      try {
+        const snap = await getDocs(q);
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MedicalRecord);
+      } catch (err) {
+        console.error("Index error or no records", err);
         return [];
       }
-
-      const chunks: string[][] = [];
-      for (let i = 0; i < assignedPatientIds.length; i += 10) {
-        chunks.push(assignedPatientIds.slice(i, i + 10));
-      }
-
-      const docs = await Promise.all(
-        chunks.map(async (ids) => {
-          const snap = await getDocs(query(collection(db, "medical_records"), where("patientId", "in", ids)));
-          return snap.docs;
-        })
-      );
-
-      return Array.from(new Map(docs.flat().map((d) => [d.id, d])).values()).map(
-        (d) => ({ id: d.id, ...d.data() } as MedicalRecord)
-      );
     },
   });
 

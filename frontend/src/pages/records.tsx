@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { isToday, isThisWeek, isThisMonth } from "date-fns";
 
 const LOCAL_RECORDS_KEY = "opdms_staff_local_records_v1";
 const LOCAL_DB_NAME = "opdms-local-files";
@@ -61,6 +62,7 @@ export default function Records() {
   const [selectedRecord, setSelectedRecord] = useState<RecordItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [staffPage, setStaffPage] = useState(1);
   const [shareRecord, setShareRecord] = useState<RecordItem | null>(null);
   const [shareEmail, setShareEmail] = useState("");
@@ -117,7 +119,18 @@ export default function Records() {
     r.doctorName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const mergedStaffRecords = [...localStaffRecords, ...(records ?? [])] as RecordItem[];
+  const mergedStaffRecords = [...localStaffRecords, ...(records ?? [])].filter(r => typeFilter === "all" ? true : r.recordType === typeFilter).filter(r => {
+    if (dateFilter === "all") return true;
+    if (!r.date) return false;
+    const d = new Date(r.date);
+    if (dateFilter === "today") return isToday(d);
+    if (dateFilter === "week") return isThisWeek(d);
+    if (dateFilter === "month") return isThisMonth(d);
+    return true;
+  }).filter(r => 
+    (r.patientName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
+    (r.fileName?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+  ) as RecordItem[];
 
   const staffFilteredRecords = mergedStaffRecords.filter((record) => {
     const keyword = searchTerm.toLowerCase();

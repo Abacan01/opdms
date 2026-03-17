@@ -4,7 +4,7 @@ import { useAppointments, Appointment, formatAppointmentTime } from "@/hooks/use
 import { useAuth } from "@/hooks/use-auth";
 import { useDoctors } from "@/hooks/use-doctors";
 import { Calendar, Clock, Loader2, X, AlertCircle, Eye, Trash2 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isThisWeek, isThisMonth } from "date-fns";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -27,10 +27,12 @@ export default function Schedule() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [staffPage, setStaffPage] = useState(1);
   const [patientSearch, setPatientSearch] = useState("");
   const [patientStatusFilter, setPatientStatusFilter] = useState("all");
   const [patientTypeFilter, setPatientTypeFilter] = useState("all");
+  const [patientDateFilter, setPatientDateFilter] = useState("all");
 
   // Calendar logic
   const monthStart = startOfMonth(selectedDate);
@@ -42,11 +44,18 @@ export default function Schedule() {
     .filter((appt) => {
       const byStatus = statusFilter === "all" ? true : appt.status === statusFilter;
       const byType = typeFilter === "all" ? true : appt.appointmentType === typeFilter;
+      let byDate = true;
+      if (dateFilter !== "all" && appt.date) {
+        const d = new Date(appt.date);
+        if (dateFilter === "today") byDate = isToday, isThisWeek, isThisMonth(d);
+        else if (dateFilter === "week") byDate = isThisWeek(d);
+        else if (dateFilter === "month") byDate = isThisMonth(d);
+      }
       const keyword = search.toLowerCase();
       const byKeyword =
         (appt.patientName ?? "").toLowerCase().includes(keyword) ||
         appt.appointmentType.toLowerCase().includes(keyword);
-      return byStatus && byType && byKeyword;
+      return byStatus && byType && byKeyword && byDate;
     });
   const staffPerPage = 6;
   const staffTotalPages = Math.max(1, Math.ceil(allStaffAppointments.length / staffPerPage));
@@ -59,13 +68,20 @@ export default function Schedule() {
   const patientAppointments = appointments.filter((appt) => {
     const byStatus = patientStatusFilter === "all" ? true : appt.status === patientStatusFilter;
     const byType = patientTypeFilter === "all" ? true : appt.appointmentType === patientTypeFilter;
+    let byDate = true;
+    if (patientDateFilter !== "all" && appt.date) {
+      const d = new Date(appt.date);
+      if (patientDateFilter === "today") byDate = isToday, isThisWeek, isThisMonth(d);
+      else if (patientDateFilter === "week") byDate = isThisWeek(d);
+      else if (patientDateFilter === "month") byDate = isThisMonth(d);
+    }
     const keyword = patientSearch.toLowerCase();
     const bySearch =
       appt.doctorName.toLowerCase().includes(keyword) ||
       appt.specialization.toLowerCase().includes(keyword) ||
       appt.service.toLowerCase().includes(keyword) ||
       appt.appointmentType.toLowerCase().includes(keyword);
-    return byStatus && byType && bySearch;
+    return byStatus && byType && bySearch && byDate;
   });
   const activePatientAppointments = patientAppointments.filter(
     (a) => a.status === "pending" || a.status === "upcoming"
@@ -408,7 +424,7 @@ export default function Schedule() {
                     className={cn(
                       "aspect-square rounded-full flex items-center justify-center text-sm transition-all relative",
                       isSelected ? "bg-primary text-primary-foreground font-bold" : "hover:bg-muted font-medium text-foreground",
-                      isToday(day) && !isSelected && "text-primary border border-primary/50"
+                      isToday, isThisWeek, isThisMonth(day) && !isSelected && "text-primary border border-primary/50"
                     )}
                   >
                     {format(day, 'd')}
